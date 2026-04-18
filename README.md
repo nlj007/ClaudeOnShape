@@ -5,16 +5,81 @@ agent today; Tier-3 planner + local-model (Gemma/Qwen) adapter planned.
 
 ## Quick start
 
+### 1. Get API keys
+
+You need three keys. Sign up / create them at:
+
+- **Anthropic API key** — https://console.anthropic.com/settings/keys
+  (requires an Anthropic account with a credit balance)
+- **Onshape access key + secret key** — https://dev-portal.onshape.com/keys
+  (click "Create new API key"; copy both the access key and the secret key
+  — the secret is shown only once)
+
+### 2. Clone and install
+
 ```bash
-python3 -m venv .venv           # or: uv venv --python 3.12 .venv
+git clone https://github.com/nlj007/ClaudeOnShape.git
+cd ClaudeOnShape
+python3 -m venv .venv            # or: uv venv --python 3.12 .venv
 .venv/bin/pip install -r requirements.txt
-cp .env.example .env            # fill in ANTHROPIC_API_KEY + Onshape HMAC keys
+```
+
+### 3. Configure credentials
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and paste your three keys:
+
+```
+ONSHAPE_ACCESS_KEY=...
+ONSHAPE_SECRET_KEY=...
+ANTHROPIC_API_KEY=...
+```
+
+`.env` is gitignored — it never leaves your machine. (For a more secure
+setup, macOS users can store keys in Keychain and export them via
+`~/.zshrc` instead; see "Optional: Keychain-based secrets" below.)
+
+### 4. Point the agent at an Onshape Part Studio
+
+Open any Part Studio in Onshape. The URL looks like:
+
+```
+https://cad.onshape.com/documents/<did>/w/<wid>/e/<eid>
+```
+
+Copy the three IDs out of the URL. Then run:
+
+```bash
 .venv/bin/python agent.py <did> <wid> <eid>                 # interactive
 .venv/bin/python agent.py <did> <wid> <eid> "your prompt"   # one-shot
 ```
 
-The three IDs come from any Onshape Part Studio URL:
-`cad.onshape.com/documents/<did>/w/<wid>/e/<eid>`.
+Try a prompt like: `"Create a 3x3x3 inch cube centered on the origin."`
+
+### Optional: Keychain-based secrets (macOS)
+
+If you'd rather not keep keys in a `.env` file, store them in macOS
+Keychain and export them from your shell:
+
+```bash
+security add-generic-password -a "$USER" -s anthropic-api-key -w
+security add-generic-password -a "$USER" -s onshape-access-key -w
+security add-generic-password -a "$USER" -s onshape-secret-key -w
+```
+
+Then add to `~/.zshrc`:
+
+```bash
+export ANTHROPIC_API_KEY="$(security find-generic-password -s anthropic-api-key -w 2>/dev/null)"
+export ONSHAPE_ACCESS_KEY="$(security find-generic-password -s onshape-access-key -w 2>/dev/null)"
+export ONSHAPE_SECRET_KEY="$(security find-generic-password -s onshape-secret-key -w 2>/dev/null)"
+```
+
+Open a new terminal, click "Always Allow" on the Keychain prompts, and
+delete `.env` — the agent reads env vars first.
 
 ## Layout
 
